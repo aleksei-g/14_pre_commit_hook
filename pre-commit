@@ -3,15 +3,24 @@
 import subprocess
 import sys
 import re
+import os.path
 
 
-TEST_COMMAND = 'sh run_tests.sh'
+FILE_COMMAND_TEST = 'run_tests.sh'
 
 
-def run_tests():
+def check_filepath(filepath):
+    if not os.path.exists(filepath):
+        print('Pre-commit hook not run! No such file "%s"!' % filepath)
+        return False
+    return True
+
+
+def run_tests(filepath):
     print('Please wait. Testing...')
+    test_command = 'sh %s' % filepath
     try:
-        process = subprocess.Popen(TEST_COMMAND,
+        process = subprocess.Popen(test_command,
                                    stdin=None,
                                    stdout=subprocess.PIPE,
                                    stderr=subprocess.STDOUT,
@@ -30,4 +39,6 @@ def run_tests():
         sys.exit(1)
 
 if __name__ == '__main__':
-    run_tests()
+    if not check_filepath(FILE_COMMAND_TEST):
+        sys.exit(1)
+    run_tests(FILE_COMMAND_TEST)
