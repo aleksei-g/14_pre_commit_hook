@@ -2,43 +2,31 @@
 
 import subprocess
 import sys
-import re
 import os.path
 
 
 FILE_COMMAND_TEST = 'run_tests.sh'
 
 
-def check_filepath(filepath):
-    if not os.path.exists(filepath):
-        print('Pre-commit hook not run! No such file "%s"!' % filepath)
-        return False
-    return True
-
-
 def run_tests(filepath):
-    print('Please wait. Testing...')
     test_command = 'sh %s' % filepath
-    try:
-        process = subprocess.Popen(test_command,
-                                   stdin=None,
-                                   stdout=subprocess.PIPE,
-                                   stderr=subprocess.STDOUT,
-                                   shell=True,
-                                   universal_newlines=True
-                                   )
-        output = process.communicate(None)[0]
-    except Exception, e:
-        raise e
-    failures = re.findall(r'(?<=failures\=)\d+', output)
-    failures += re.findall(r'[EW]\d+', output)
-    if not failures:
+    process = subprocess.Popen(test_command,
+                               stdout=subprocess.PIPE,
+                               stderr=subprocess.STDOUT,
+                               shell=True)
+    process.wait()
+    return process.returncode
+
+
+if __name__ == '__main__':
+    if not os.path.exists(FILE_COMMAND_TEST):
+        print('Pre-commit hook not run! No such file "%s"!' %
+              FILE_COMMAND_TEST)
+        sys.exit(1)
+    print('Please wait. Testing...')
+    return_code = run_tests(FILE_COMMAND_TEST)
+    if return_code == 0:
         print('Tests completed successfully.')
     else:
         print('Some of tests are failed. Check tests before do commit.')
-        sys.exit(1)
-
-if __name__ == '__main__':
-    if not check_filepath(FILE_COMMAND_TEST):
-        sys.exit(1)
-    run_tests(FILE_COMMAND_TEST)
+    sys.exit(return_code)
